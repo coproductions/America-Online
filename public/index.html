@@ -1,0 +1,33 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+  <meta charset="UTF-8">
+  <title>Broadcast Client</title>
+  <link rel="stylesheet" type="text/css" href="css/styles.css">
+</head>
+<body>
+  <div id="registration">
+    <h2>Enter a Nickname</h2>
+    <h3 id="nickname_error" class="error"></h3>
+    <form action="" id="registration_form">
+      <input type="text" id="nickname">
+      <button>Sign In</button>
+    </form>
+  </div>
+  <div id="chatroom">
+    <ul id="connectedUserList"></ul>
+    <div id="chatlog">
+    </div>
+    <form id="messageForm">
+      <input type="text" id='message' placeholder='message'>
+    <button id="send">Send</button>
+    </form>
+  </div>
+
+  <script src="bower_components/jquery/dist/jquery.min.js"></script>
+  <script src="bower_components/socket.io-client/socket.io.js">
+  </script>
+  <script src="js/client.js"></script>
+
+</body>
+</html>

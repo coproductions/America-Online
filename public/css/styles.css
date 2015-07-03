@@ -1,0 +1,18 @@
+#chatlog p b{
+  margin-right: 6px;
+}
+
+#chatlog{
+  width : 600px;
+  height: 300px;
+  overflow: auto;
+
+}
+
+.serverMessage{
+  font-style: italic;
+}
+
+.mention{
+  background-color: yellow;
+}
