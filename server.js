@@ -9,11 +9,16 @@ var socketIO = require('socket.io');
 var server = socketIO.listen(PORT);
 var nicknames = {};
 var connectedSockets = {};
+var maxUserMessagePerSecond = 1;
+var maxTotalMessagePerSecond = 2;
+var totalMessageTimeCache = [];
 
 
 
 //handle connection events
 server.sockets.on(SOCKET_CONNECTION, function (socket){
+
+  var timeCache = [];
 
   socket.on(SOCKET_DISCONNECT,function(){
     if(socket.nickname){
@@ -26,9 +31,21 @@ server.sockets.on(SOCKET_CONNECTION, function (socket){
   })
 
   socket.on(SOCKET_USER_MESSAGE, function(message){
+    timeCache.unshift(Date.now());
+    totalMessageTimeCache.unshift(Date.now());
 
-    //broadcast this message to connected users
-    socket.broadcast.emit(SOCKET_USER_MESSAGE,socket.nickname, message)
+    //checking for rate of messages
+    if(timeCache[0]-timeCache[1] < 1000/maxUserMessagePerSecond){
+      // socket.disconnect();
+      socket.broadcast.emit(SOCKET_USER_MESSAGE,SERVER_USER,socket.nickname+' was temporarily blocked for sending too many messages per second.')
+      // socket.emit('error','hello i am an error')
+    }
+    else if(totalMessageTimeCache[0]-totalMessageTimeCache[1] < 1000/maxTotalMessagePerSecond){
+      socket.broadcast.emit(SOCKET_USER_MESSAGE,SERVER_USER,'Temporary message overload.')
+    }
+    else{
+      socket.broadcast.emit(SOCKET_USER_MESSAGE,socket.nickname, message)
+    }
   })
 
   socket.on(SOCKET_USER_REGISTRATION, function(nickname, callback){
@@ -54,21 +71,26 @@ server.sockets.on(SOCKET_CONNECTION, function (socket){
 
 });
 
-  process.stdin.setEncoding('utf8');
-  //listening for a kick input
-  process.stdin.on('data',function(chunk){
-    if(chunk.slice(0,5) === '/kick'){
-      var userToKick = chunk.split(' ')[1];
-      var reasonToKick = chunk.split(' ')[2];
-      if(!reasonToKick){
-        userToKick = userToKick.slice(0,userToKick.length-1)
-      }
-     //kicking the right user
-     if(userToKick in nicknames){
-        var kickedIp = connectedSockets[userToKick].handshake.address;
-        connectedSockets[userToKick].disconnect();
-        process.stdout.write('user: '+userToKick+' with IP: '+kickedIp+' has been kicked')
-        server.emit(SOCKET_USER_MESSAGE,SERVER_USER,userToKick+' has been kicked')
-     }
+process.stdin.setEncoding('utf8');
+//listening for a kick input
+process.stdin.on('data',function(chunk){
+  if(chunk.slice(0,5) === '/kick'){
+    var userToKick = chunk.split(' ')[1];
+    var reasonToKick = chunk.split(' ')[2];
+    if(!reasonToKick){
+      userToKick = userToKick.slice(0,userToKick.length-1)
     }
-  })
+   //kicking the right user
+   if(userToKick in nicknames){
+      var kickedIp = connectedSockets[userToKick].handshake.address;
+      connectedSockets[userToKick].disconnect();
+      process.stdout.write('user: '+userToKick+' with IP: '+kickedIp+' has been kicked')
+      server.emit(SOCKET_USER_MESSAGE,SERVER_USER,userToKick+' has been kicked')
+   }
+  }
+})
+
+server.sockets.on(SOCKET_USER_MESSAGE,function(){
+  console.log('listening to a message coming in')
+  process.stdout.write('its working')
+})

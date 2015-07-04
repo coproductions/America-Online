@@ -1,5 +1,7 @@
 (function(){
   var SERVER_ADDRESS = 'http://localhost:8000';
+    // var SERVER_ADDRESS = 'http://10.0.1.30:8000';
+
   var SOCKET_CONNECT = 'connect';
   var SOCKET_RECONNECTING = 'reconnecting';
   var SOCKET_DISCONNECT = 'disconnect';
