@@ -14,5 +14,10 @@
 }
 
 .mention{
-  background-color: yellow;
+  background-color: WhiteSmoke;
+}
+
+.mentionedName{
+  font-weight: 700;
+  /*color : red;*/
 }

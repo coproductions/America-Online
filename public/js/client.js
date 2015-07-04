@@ -61,6 +61,10 @@
 
 
   function message(from, message){
+    var lowerCaseMessage = ' '+message.toLowerCase()+' ';
+    if(myNickname){
+      var myNicknameWithSpace = ' '+myNickname.toLowerCase()+' ';
+    }
     var newMessage = $('<p>');
     var fromTag = $('<b>',{
       text : from
@@ -74,10 +78,24 @@
     }else{
       newMessage.append(fromTag);
     }
-    if(message.indexOf(myNickname) >= 0){
-      messageTag.addClass('mention')
-    }
+    if(lowerCaseMessage.indexOf(myNicknameWithSpace) >= 0){
+      var nameIndex = lowerCaseMessage.indexOf(myNicknameWithSpace);
+      var messageBeforeNameTag = $('<span>',{
+        text : message.slice(0,nameIndex)
+              });
+      var messageAfterNameTag = $('<span>',{
+        text : message.slice(nameIndex+myNickname.length)
+      });
+      var messageMentionNameTag = $('<span>',{
+        text : message.slice(nameIndex,nameIndex+myNickname.length),
+        class : 'mentionedName'
+      });
+      newMessage.addClass('mention')
+      newMessage.append(messageBeforeNameTag,messageMentionNameTag,messageAfterNameTag)
+    } else{
+
     newMessage.append(messageTag);
+    }
     $('#chatlog').append(newMessage).get(0).scrollTop = 100000;
   }
 
