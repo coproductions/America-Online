@@ -9,6 +9,7 @@
   var SOCKET_ERROR = 'error';
   var SOCKET_USER_MESSAGE = 'user message';
   var SOCKET_USER_REGISTRATION = 'user registration';
+  var PRIVATE_MESSAGE = 'private message';
   var myNickname;
 
 
@@ -41,6 +42,16 @@
     message(SYSTEM,'An unknown error occurred.')
    }
   });
+
+ socket.on(PRIVATE_MESSAGE,receivePrivateMessage)
+
+ function receivePrivateMessage(fromUser,user,theMessage){
+    console.log('priveate message received')
+    if(user === myNickname){
+      theMessage = 'private message: '+theMessage;
+      message(fromUser,theMessage);
+    }
+ }
 
  socket.on(SOCKET_USER_MESSAGE, function(from,userMessage){
   message(from,userMessage)

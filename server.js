@@ -4,6 +4,7 @@ var SOCKET_DISCONNECT = 'disconnect';
 var SOCKET_USER_MESSAGE = 'user message';
  var SOCKET_USER_REGISTRATION = 'user registration';
  var SERVER_USER = 'server';
+ var PRIVATE_MESSAGE = 'private message';
 var socketIO = require('socket.io');
 //listening for soccket connection on port 8000
 var server = socketIO.listen(PORT);
@@ -12,11 +13,15 @@ var connectedSockets = {};
 var maxUserMessagePerSecond = 1;
 var maxTotalMessagePerSecond = 2;
 var totalMessageTimeCache = [];
+var banList = {};
 
 
 
 //handle connection events
 server.sockets.on(SOCKET_CONNECTION, function (socket){
+  if(socket.handshake.address in banList){
+    socket.disconnect();
+  }
 
   var timeCache = [];
 
@@ -43,8 +48,20 @@ server.sockets.on(SOCKET_CONNECTION, function (socket){
     else if(totalMessageTimeCache[0]-totalMessageTimeCache[1] < 1000/maxTotalMessagePerSecond){
       socket.broadcast.emit(SOCKET_USER_MESSAGE,SERVER_USER,'Temporary message overload.')
     }
+    else if(message.slice(0,3) === '/pm'){
+      console.log('what',message.slice(0,3))
+      sendPrivateMessage(message);
+    }
+
     else{
       socket.broadcast.emit(SOCKET_USER_MESSAGE,socket.nickname, message)
+    }
+
+    function sendPrivateMessage(message){
+      var userToMessage = message.split(' ')[1];
+      var remainingMessage = message.slice(3+userToMessage.length+1,message.length)
+      var fromUser = socket.nickname;
+      socket.broadcast.emit(PRIVATE_MESSAGE,fromUser,userToMessage,remainingMessage)
     }
   })
 
@@ -71,6 +88,8 @@ server.sockets.on(SOCKET_CONNECTION, function (socket){
 
 });
 
+
+
 process.stdin.setEncoding('utf8');
 //listening for a kick input
 process.stdin.on('data',function(chunk){
@@ -88,7 +107,51 @@ process.stdin.on('data',function(chunk){
       server.emit(SOCKET_USER_MESSAGE,SERVER_USER,userToKick+' has been kicked')
    }
   }
+  else if(chunk.slice(0,4) === '/ban'){
+    var userToBan = chunk.split(' ')[1];
+    var reasonToBan = chunk.split(' ')[2];
+    if(!reasonToBan){
+      userToBan = userToBan.slice(0,userToBan.length-1)
+    }
+   //banning the right user
+    if(userToBan in nicknames){
+      banUser(userToBan)
+    } else{
+      for(var key in connectedSockets){
+        if (userToBan === connectedSockets[key].handshake.address){
+          banUser(key)
+        }
+      }
+    }
+  }
+  else if(chunk.slice(0,6) === '/unban'){
+    var userToUnBan = chunk.split(' ')[1];
+      userToBan = userToBan.slice(0,userToBan.length-1)
+   //unbanning the right user
+    for(var key in banList){
+      if(userToUnBan === banlist[key]){
+        delete banList[key];
+        var userToUnBanName = userToUnBan;
+      } else if (userToBan === key){
+        var userToUnBanName = banList[key]
+        delete banList[key];
+      }
+        server.emit(SOCKET_USER_MESSAGE,SERVER_USER,userToUnBanName+' has been unbanned')
+
+    }
+  }
+
+
+  function banUser(userName){
+    var bannedIp = connectedSockets[userToBan].handshake.address;
+    connectedSockets[userToBan].disconnect();
+    banList[bannedIp] = userToBan;
+    console.log('banlist',banList)
+    process.stdout.write('user: '+userToBan+' with IP: '+bannedIp+' has been banned')
+    server.emit(SOCKET_USER_MESSAGE,SERVER_USER,userToBan+' has been banned')
+  }
 })
+
 
 server.sockets.on(SOCKET_USER_MESSAGE,function(){
   console.log('listening to a message coming in')
