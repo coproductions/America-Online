@@ -1,6 +1,8 @@
 (function(){
   var SERVER_ADDRESS = 'http://localhost:8000';
     // var SERVER_ADDRESS = 'http://10.0.1.30:8000';
+  // var moment = require('../bower_components/moment/moment.js');
+  // moment().format();
 
   var SOCKET_CONNECT = 'connect';
   var SOCKET_RECONNECTING = 'reconnecting';
@@ -90,6 +92,10 @@
     var messageTag = $('<span>',{
       text : message
     });
+    var dateTag = $('<div>',{
+      text : moment().format('MMMM Do YYYY, h:mm:ss a'),
+      class : 'dateTag'
+    });
 
     if(from === 'server'){
       messageTag.addClass("serverMessage");
@@ -117,6 +123,7 @@
     } else{
 
       newMessage.append(messageTag);
+      newMessage.append(dateTag);
     }
     $('#chatlog').append(newMessage).get(0).scrollTop = 100000;
   }

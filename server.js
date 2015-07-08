@@ -28,9 +28,12 @@ server.sockets.on(SOCKET_CONNECTION, function (socket){
 
   socket.on('ignore',ignoreFunction);
   function ignoreFunction(ignoredUser,reason){
-    // server.emit('ignore notification',ignoredUser,reason,socket.nickname)
     socket.broadcast.emit(SOCKET_USER_MESSAGE,SERVER_USER,socket.nickname+' is ignoring '+ignoredUser+' because of: '+reason)
+  }
 
+    socket.on('unignore',unignoreFunction);
+  function unignoreFunction(unignoredUser,reason){
+    socket.broadcast.emit(SOCKET_USER_MESSAGE,SERVER_USER,socket.nickname+' is not ignoring '+unignoredUser+' anymore because of: '+reason)
   }
 
   socket.on(SOCKET_DISCONNECT,function(){
