@@ -25,6 +25,14 @@ server.sockets.on(SOCKET_CONNECTION, function (socket){
 
   var timeCache = [];
 
+
+  socket.on('ignore',ignoreFunction);
+  function ignoreFunction(ignoredUser,reason){
+    // server.emit('ignore notification',ignoredUser,reason,socket.nickname)
+    socket.broadcast.emit(SOCKET_USER_MESSAGE,SERVER_USER,socket.nickname+' is ignoring '+ignoredUser+' because of: '+reason)
+
+  }
+
   socket.on(SOCKET_DISCONNECT,function(){
     if(socket.nickname){
     delete nicknames[socket.nickname];
@@ -49,7 +57,6 @@ server.sockets.on(SOCKET_CONNECTION, function (socket){
       socket.broadcast.emit(SOCKET_USER_MESSAGE,SERVER_USER,'Temporary message overload.')
     }
     else if(message.slice(0,3) === '/pm'){
-      console.log('what',message.slice(0,3))
       sendPrivateMessage(message);
     }
 
@@ -59,9 +66,14 @@ server.sockets.on(SOCKET_CONNECTION, function (socket){
 
     function sendPrivateMessage(message){
       var userToMessage = message.split(' ')[1];
-      var remainingMessage = message.slice(3+userToMessage.length+1,message.length)
-      var fromUser = socket.nickname;
-      socket.broadcast.emit(PRIVATE_MESSAGE,fromUser,userToMessage,remainingMessage)
+      if(userToMessage in nicknames){
+        var remainingMessage = message.slice(3+userToMessage.length+1,message.length)
+        var fromUser = socket.nickname;
+        socket.broadcast.emit(PRIVATE_MESSAGE,fromUser,userToMessage,remainingMessage)
+      } else{
+          server.emit(PRIVATE_MESSAGE,'server',socket.nickname,'the user you are trying to message is not currently online.')
+
+      }
     }
   })
 

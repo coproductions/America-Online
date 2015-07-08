@@ -11,6 +11,7 @@
   var SOCKET_USER_REGISTRATION = 'user registration';
   var PRIVATE_MESSAGE = 'private message';
   var myNickname;
+  var ignoreList = {};
 
 
   var SYSTEM = 'System';
@@ -43,12 +44,16 @@
    }
   });
 
+
+
  socket.on(PRIVATE_MESSAGE,receivePrivateMessage)
 
  function receivePrivateMessage(fromUser,user,theMessage){
-    console.log('priveate message received')
-    if(user === myNickname){
-      theMessage = 'private message: '+theMessage;
+    if(fromUser in ighoreList){
+      //do nothing
+      return;
+    } else if(user === myNickname){
+      theMessage = 'sent you a private message: '+theMessage;
       message(fromUser,theMessage);
     }
  }
@@ -105,9 +110,13 @@
       });
       newMessage.addClass('mention')
       newMessage.append(messageBeforeNameTag,messageMentionNameTag,messageAfterNameTag)
+    } else if(from in ignoreList){
+      //do not display message
+      return;
+
     } else{
 
-    newMessage.append(messageTag);
+      newMessage.append(messageTag);
     }
     $('#chatlog').append(newMessage).get(0).scrollTop = 100000;
   }
@@ -115,14 +124,24 @@
   $('#messageForm').submit(function(){
     var messageField = $('#message')
     var theMessage = messageField.val();
-    //add my message to the chatlog
-    message('me',theMessage)
 
-    //send message to the server
-    socket.emit(SOCKET_USER_MESSAGE,theMessage)
+    if(theMessage.slice(0,7) === '/ignore'){
+      var userToIgnore = theMessage.split(' ')[1];
+      var reasonToIgnore = theMessage.split(' ')[2];
+      ignoreList[userToIgnore] = userToIgnore;
+      socket.emit('ignore',userToIgnore,reasonToIgnore);
+      message('server','you have successfully ignored '+userToIgnore+' and will no longer receive this user\'s messages')
+    } else{
 
-    //clear the message input
-    messageField.val('');
+      //add my message to the chatlog
+      message('me',theMessage)
+
+      //send message to the server
+      socket.emit(SOCKET_USER_MESSAGE,theMessage)
+
+      //clear the message input
+      messageField.val('');
+    }
 
     return false;
   })
